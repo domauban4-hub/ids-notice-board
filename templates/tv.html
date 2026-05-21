@@ -1,0 +1,419 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IDS Notice Board</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100%;
+            height: 100vh;
+            padding: 18px 28px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            height: 44px;
+            object-fit: contain;
+        }
+
+        .admin-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            font-weight: 700;
+            border: 1px solid rgba(255,255,255,0.12);
+            font-size: 0.95rem;
+            transition: background 0.2s ease, transform 0.2s ease;
+            opacity: 0.82;
+        }
+
+        .admin-link:hover {
+            background: rgba(255,255,255,0.14);
+            transform: translateY(-1px);
+        }
+
+        .bottom-admin-link {
+            position: absolute;
+            right: 24px;
+            bottom: 22px;
+            z-index: 1;
+            opacity: 0.82;
+        }
+
+        .datetime {
+            text-align: right;
+            min-width: 180px;
+        }
+
+        .time {
+            font-size: 34px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .date {
+            color: #cbd5e1;
+            font-size: 16px;
+            margin-top: 6px;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 36px;
+            font-weight: 700;
+            margin: 16px 0 18px;
+            letter-spacing: 1px;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 18px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .staff-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-rows: repeat(2, minmax(0, 1fr));
+            grid-template-areas:
+                "yusni azmie sarah"
+                "abdullah abdullah .";
+            gap: 18px;
+            min-height: 0;
+        }
+
+        .staff-card {
+            position: relative;
+            background: rgba(16, 24, 48, 0.96);
+            border-radius: 22px;
+            padding: 18px 20px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            min-height: 170px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .staff-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 10px;
+            background: #38bdf8;
+            border-top-right-radius: 20px;
+            border-bottom-right-radius: 20px;
+        }
+
+        .staff-name {
+            position: relative;
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0 0 16px;
+            z-index: 1;
+        }
+
+        .staff-status {
+            position: relative;
+            z-index: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 140px;
+            padding: 12px 18px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .status-Office { background: #16a34a; color: #fff; }
+        .status-Meeting { background: #eab308; color: #111827; }
+        .status-Training { background: #3b82f6; color: #fff; }
+        .status-On-Leave { background: #ef4444; color: #fff; }
+        .status-Site { background: #a855f7; color: #fff; }
+        .status-Business-Trip { background: #f97316; color: #111827; }
+        .status-MC { background: #818cf8; color: #111827; }
+        .status-Remote { background: #0ea5e9; color: #fff; }
+
+        .side-panel {
+            background: rgba(16, 24, 48, 0.95);
+            border-radius: 28px;
+            box-shadow: 0 16px 44px rgba(0, 0, 0, 0.22);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .side-stack {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .side-box {
+            position: absolute;
+            width: 78%;
+            padding: 16px 20px;
+            border-radius: 22px;
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            text-align: center;
+            box-shadow: 0 14px 32px rgba(0,0,0,0.18);
+        }
+
+        .box-ids {
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%) rotate(-18deg);
+            background: #38bdf8;
+            animation: rotate-ids 15s linear infinite;
+        }
+
+        .box-technipfmc {
+            top: 36%;
+            left: 50%;
+            transform: translateX(-50%) rotate(-2deg);
+            background: #f59e0b;
+            animation: rotate-technipfmc 15s linear infinite;
+        }
+
+        .box-safety {
+            top: 62%;
+            left: 50%;
+            transform: translateX(-50%) rotate(16deg);
+            background: #22c55e;
+            animation: rotate-safety 15s linear infinite;
+        }
+
+        /* IMAGE SLIDE */
+        #image-slide {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #000;
+            padding: 14px 16px 20px;
+        }
+
+            #slide-image {
+                width: 94%;
+                max-width: 94%;
+                max-height: 90%;
+                object-fit: contain;
+                z-index: 1;
+                border-radius: 10px;
+                box-shadow: 0 26px 70px rgba(2,6,23,0.8);
+                background: #020617;
+            }
+
+        #image-slide .slide-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.20);
+            z-index: 2;
+        }
+
+            /* top bar on slide: logo left, date/time right */
+            #image-slide .top-bar {
+                position: absolute;
+                top: 18px;
+                left: 28px;
+                right: 28px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+                z-index: 3;
+            }
+
+            /* slide logo and time fit nicely */
+            #image-slide .logo {
+                height: 40px;
+                object-fit: contain;
+            }
+
+            #image-slide .datetime { text-align: right; min-width: 180px; }
+            #slide-time { font-size: 32px; font-weight: 700; color: #fff; }
+            #slide-date { color: #cbd5e1; font-size: 14px; margin-top: 6px; }
+
+            /* small decorative bottom border under the slide */
+            #image-slide::after {
+                content: '';
+                position: absolute;
+                left: 36px;
+                right: 36px;
+                bottom: 22px;
+                height: 6px;
+                background: linear-gradient(90deg, rgba(56,189,248,0.9), rgba(245,158,11,0.9), rgba(34,197,94,0.9));
+                border-radius: 6px;
+                opacity: 0.9;
+                z-index: 3;
+            }
+
+    </style>
+</head>
+
+<body>
+
+<!-- IMAGE SLIDE (hidden by default) -->
+<div id="image-slide">
+    <img id="slide-image" src="" alt="Slide image">
+    <div class="slide-overlay"></div>
+    <div class="top-bar">
+        <img src="{{ url_for('static', filename='images/technipfmc.png') }}" class="logo" alt="TechnipFMC logo">
+        <div class="datetime">
+            <div class="time" id="slide-time"></div>
+            <div class="date" id="slide-date"></div>
+        </div>
+    </div>
+</div>
+
+<!-- STAFF DASHBOARD -->
+<div class="container" id="staff-slide">
+
+    <div class="top-bar">
+        <img src="{{ url_for('static', filename='images/technipfmc.png') }}" class="logo">
+        <div class="datetime">
+            <div class="time" id="time"></div>
+            <div class="date" id="date"></div>
+        </div>
+    </div>
+
+    <div class="title">IDS STAFF STATUS BOARD</div>
+
+    <div class="main-layout">
+
+        <div class="staff-grid">
+            {% for staff_member in staff %}
+            <div class="staff-card">
+                <div class="staff-name">{{ staff_member['name'] }}</div>
+                <div class="staff-status status-{{ staff_member['status']|replace(' ', '-') }}">
+                    {{ staff_member['status'] }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="side-panel">
+            <div class="side-stack">
+                <div class="side-box box-ids">IDS</div>
+                <div class="side-box box-technipfmc">TechnipFMC</div>
+                <div class="side-box box-safety">Safety First</div>
+            </div>
+                </div>
+        <a class="admin-link bottom-admin-link" href="{{ url_for('admin_page') }}">Admin</a>
+    </div>
+</div>
+</div>
+
+<script>
+
+    // CLOCK
+    function updateDateTime() {
+        const now = new Date();
+        document.getElementById('time').textContent = now.toLocaleTimeString();
+        document.getElementById('date').textContent = now.toDateString();
+    }
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+
+    // SLIDESHOW
+    const slides = [
+        {% for slide in slides %}
+        "{{ slide.src }}"{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    let index = 0;
+    const staffSlide = document.getElementById("staff-slide");
+    const imageSlide = document.getElementById("image-slide");
+    const image = document.getElementById("slide-image");
+    const slideTime = document.getElementById('slide-time');
+    const slideDate = document.getElementById('slide-date');
+    let viewMode = 'dashboard';
+
+    function showDashboard() {
+        staffSlide.style.display = "flex";
+        imageSlide.style.display = "none";
+        viewMode = 'dashboard';
+        index = 0;
+    }
+
+    function showSlide(i) {
+        if (!slides.length) {
+            showDashboard();
+            return;
+        }
+        index = i % slides.length;
+        image.src = slides[index];
+        staffSlide.style.display = "none";
+        imageSlide.style.display = "flex";
+        viewMode = 'slideshow';
+    }
+
+    function advanceView() {
+        if (viewMode === 'dashboard') {
+            showSlide(0);
+        } else {
+            if (index + 1 >= slides.length) {
+                showDashboard();
+            } else {
+                showSlide(index + 1);
+            }
+        }
+    }
+
+    function updateSlideDateTime() {
+        const now = new Date();
+        slideTime.textContent = now.toLocaleTimeString();
+        slideDate.textContent = now.toDateString();
+    }
+
+    showDashboard();
+    setInterval(advanceView, 15000);
+    updateSlideDateTime();
+    setInterval(updateSlideDateTime, 1000);
+
+    
+</script>
+
+</body>
+</html>

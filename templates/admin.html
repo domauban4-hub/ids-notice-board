@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | IDS Notice Board</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="page-shell">
+        <div class="nav-links">
+            <a class="nav-link" href="{{ url_for('tv_dashboard') }}">Dashboard</a>
+            <a class="nav-link" href="{{ url_for('status_page') }}">Status Update</a>
+        </div>
+
+        <div class="page-title">Admin Dashboard</div>
+        <p class="page-description">Manage staff and statuses. Add new team members, remove staff, or adjust a status manually.</p>
+        <div class="page-actions">
+            <a class="nav-link" href="{{ url_for('tv_dashboard') }}">Back to Dashboard</a>
+        </div>
+
+        <div class="admin-card admin-panel">
+            <h2>Current staff</h2>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for staff_member in staff %}
+                    <tr>
+                        <td>{{ staff_member['name'] }}</td>
+                        <td>{{ staff_member['email'] }}</td>
+                        <td>
+                            <span class="status-chip status-{{ staff_member['status']|replace(' ', '-') }}">
+                                {{ staff_member['status'] }}
+                            </span>
+                        </td>
+                        <td>
+                            <form method="post" class="admin-actions">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="staff_id" value="{{ staff_member['id'] }}">
+                                <button type="submit" class="delete-button">Remove</button>
+                            </form>
+                            <form method="post" class="admin-actions">
+                                <input type="hidden" name="action" value="edit">
+                                <input type="hidden" name="staff_id" value="{{ staff_member['id'] }}">
+                                <select name="status">
+                                    {% for status in statuses %}
+                                    <option value="{{ status }}" {% if staff_member['status'] == status %}selected{% endif %}>{{ status }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="form-button">Save</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <h2>Add new staff</h2>
+            <form method="post" class="admin-panel">
+                <input type="hidden" name="action" value="add">
+                <div class="input-group">
+                    <input type="text" name="name" placeholder="New staff name" required>
+                    <input type="email" name="email" placeholder="Email address" required>
+                    <select name="status">
+                        {% for status in statuses %}
+                        <option value="{{ status }}">{{ status }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="form-button">Add staff</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="admin-card storage-section">
+            <h2>Resource storage</h2>
+            <p class="storage-help">Upload reference files, program pictures, or admin resources for later review.</p>
+            <form method="post" enctype="multipart/form-data" class="upload-form">
+                <input type="hidden" name="action" value="upload">
+                <input type="file" name="file" accept=".png,.jpg,.jpeg,.gif,.pdf,.pptx,.docx,.xlsx" required>
+                <button type="submit" class="form-button">Upload resource</button>
+            </form>
+
+            {% if storage_files %}
+            <ul class="storage-list">
+                {% for filename in storage_files %}
+                <li class="storage-item">
+                    <div class="storage-row">
+                        <a href="{{ url_for('static', filename='storage/' + filename) }}" target="_blank">{{ filename }}</a>
+                        <div class="storage-actions">
+                            <button type="button" class="form-button preview-button" data-index="{{ loop.index0 }}">Preview</button>
+                            <form method="post" class="admin-actions storage-delete-form">
+                                <input type="hidden" name="action" value="delete-file">
+                                <input type="hidden" name="filename" value="{{ filename }}">
+                                <button type="submit" class="delete-button">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="storage-empty">No files uploaded yet.</p>
+            {% endif %}
+        </div>
+        <div class="preview-overlay hidden" id="preview-overlay">
+            <div class="preview-panel">
+                <div class="preview-header">
+                    <div class="preview-title" id="preview-title"></div>
+                    <button type="button" class="delete-button" id="preview-delete">Delete</button>
+                </div>
+                <div class="preview-body">
+                    <img id="preview-image" class="hidden" alt="Preview">
+                    <iframe id="preview-frame" class="hidden" frameborder="0"></iframe>
+                </div>
+                <div class="preview-actions">
+                    <button type="button" class="form-button" id="preview-prev">Back</button>
+                    <button type="button" class="form-button" id="preview-close">Close</button>
+                    <button type="button" class="form-button" id="preview-next">Next</button>
+                </div>
+                <form method="post" id="preview-delete-form">
+                    <input type="hidden" name="action" value="delete-file">
+                    <input type="hidden" name="filename" id="preview-delete-filename" value="">
+                </form>
+            </div>
+        </div>
+
+    </div>
+    <script>
+        const storageFiles = {{ storage_files|tojson|safe }};
+        let currentPreviewIndex = 0;
+
+        const previewOverlay = document.getElementById('preview-overlay');
+        const previewTitle = document.getElementById('preview-title');
+        const previewImage = document.getElementById('preview-image');
+        const previewFrame = document.getElementById('preview-frame');
+        const previewDeleteFilename = document.getElementById('preview-delete-filename');
+        const previewDeleteForm = document.getElementById('preview-delete-form');
+
+        function isImageFile(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            return ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'].includes(ext);
+        }
+
+        function isPdfFile(filename) {
+            return filename.split('.').pop().toLowerCase() === 'pdf';
+        }
+
+        function showPreview(index) {
+            currentPreviewIndex = index;
+            const filename = storageFiles[index];
+            const url = `{{ url_for('static', filename='storage/') }}/${filename}`;
+
+            previewTitle.textContent = filename;
+            previewDeleteFilename.value = filename;
+
+            if (isImageFile(filename)) {
+                previewImage.src = url;
+                previewImage.classList.remove('hidden');
+                previewFrame.classList.add('hidden');
+            } else if (isPdfFile(filename)) {
+                previewFrame.src = url;
+                previewFrame.classList.remove('hidden');
+                previewImage.classList.add('hidden');
+            } else {
+                previewImage.classList.add('hidden');
+                previewFrame.classList.remove('hidden');
+                previewFrame.src = url;
+            }
+
+            previewOverlay.classList.remove('hidden');
+        }
+
+        function closePreview() {
+            previewOverlay.classList.add('hidden');
+            previewImage.src = '';
+            previewFrame.src = '';
+        }
+
+        function showNext() {
+            if (storageFiles.length === 0) return;
+            const nextIndex = (currentPreviewIndex + 1) % storageFiles.length;
+            showPreview(nextIndex);
+        }
+
+        function showPrev() {
+            if (storageFiles.length === 0) return;
+            const prevIndex = (currentPreviewIndex - 1 + storageFiles.length) % storageFiles.length;
+            showPreview(prevIndex);
+        }
+
+        document.querySelectorAll('.preview-button').forEach(button => {
+            button.addEventListener('click', () => {
+                showPreview(Number(button.dataset.index));
+            });
+        });
+
+        document.getElementById('preview-close').addEventListener('click', closePreview);
+        document.getElementById('preview-next').addEventListener('click', showNext);
+        document.getElementById('preview-prev').addEventListener('click', showPrev);
+        document.getElementById('preview-delete').addEventListener('click', () => {
+            previewDeleteForm.submit();
+        });
+
+        previewOverlay.addEventListener('click', (event) => {
+            if (event.target === previewOverlay) {
+                closePreview();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status Update | IDS Notice Board</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="page-shell">
+        <div class="nav-links">
+            <a class="nav-link" href="{{ url_for('tv_dashboard') }}">Dashboard</a>
+            <a class="nav-link" href="{{ url_for('admin_page') }}">Admin</a>
+        </div>
+
+        <div class="page-title">Staff Status Update</div>
+        <p class="page-description">Tap a status for your name so the TV dashboard shows the current office presence at a glance.</p>
+
+        <p id="status-message" class="status-message">Select a status to update.</p>
+
+        <div class="status-grid">
+            {% for staff_member in staff %}
+            <div class="status-card staff-row-{{ staff_member['id'] }}">
+                <div class="staff-name">{{ staff_member['name'] }}</div>
+                <div class="status-buttons">
+                    {% for status in statuses %}
+                    <button type="button"
+                        class="status-action status-{{ status|replace(' ', '-') }}{% if staff_member['status'] == status %} active{% endif %}"
+                        data-id="{{ staff_member['id'] }}"
+                        data-status="{{ status }}">
+                        {{ status }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/status.js') }}"></script>
+</body>
+</html>
